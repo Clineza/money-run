@@ -85,7 +85,7 @@ store = {
 function update_game()
 	local nextposval = nextpos(moneyman.x, moneyman.speed)
 	if nextposval <= boundery.l then
-		moneyman.x = boundery.l + 1
+		moneyman.x = boundery.l
 		moneyman.speed *= -1
 		update_money()
 	elseif nextposval >= boundery.r - 8 then
