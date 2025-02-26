@@ -43,6 +43,7 @@ moneyman = {
 }
 money = {
 	amount = 30000,
+	amount_color = 7,
 	gain = 1,  -- max amount 30000
 	maxamount = 32767,
 	maxed = ""
@@ -54,10 +55,10 @@ boundery = {
 store = {
 	speed_cost = {5, 25, 85, 360, 950, 1250, 2000, 5000, 7500, 0},
 	gain_cost = {10, 20, 110, 450, 1150, 1750, 2250, 6500, 8000, 0},
-	win_cost = {10000, 12500, 15000, 17500, 20000, 20000, 22500, 25000, 25000, 27500, 30000, 0},
+	win_cost = {10000, 15000, 20000, 25000, 30000, 32767, 0},
 	speed_amount = {0.2, 0.2, 0.4, 0.4, 0.5, 0.7, 1, 1.6, 2, 0},
 	gain_amount = {2, 5, 8, 15, 30, 60, 85, 105, 170, 0},
-	win_amount = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+	win_amount = {1, 1, 1, 1, 1, 1, 0},
 	speed_count = 1,
 	gain_count = 1,
 	win_count = 1,
@@ -73,6 +74,8 @@ store = {
 	speed_display = "",
 	gain_display = "",
 	win_display = "",
+	win_display_label = "win:   ",
+	win_display_label_color = 7,
 	speed_display_color = 7,
 	gain_display_color = 7,
 	win_display_color = 7,
@@ -105,17 +108,18 @@ function update_game()
 		store.speed_display = store.maxed
 		store.speed_display_color = 2
 	end
-	if store.gain_count< #store.gain_amount then
+	if store.gain_count < #store.gain_amount then
 		store.gain_display = "+$"..store.gain_amount[store.gain_count]	
 	else 
 		store.gain_display = store.maxed
 		store.gain_display_color = 2
 	end
-	if store.win_count < #store.win_amount then
+	if store.win_count < #store.win_amount - 1 then
 		store.win_display = "+"..store.win_amount[store.win_count]	
 	else 
-		store.win_display = store.maxed
-		store.win_display_color = 2
+		store.win_display = ""
+		store.win_display_label = "become a money god"
+		store.win_display_label_color = 10
 	end
 
 	if choice.options[choice.num] == "speed" then
@@ -147,15 +151,27 @@ function update_game()
 	if choice.options[choice.num] == "win" then
 		store.win_btn = 5
 		store.amount = store.win_cost[store.win_count]
-		if store.win_count < #store.win_amount then
+		if store.win_count < #store.win_amount - 1 then
 			store.color_num = check_cost(store.win_cost[store.win_count], money.amount)
 			store.cost = "$"..store.amount
+		elseif store.win_count == #store.win_amount - 1 then
+			store.cost = "$"..store.amount
+			if store.speed_count == #store.speed_amount and store.gain_count == #store.gain_amount and check_cost_bool(store.win_cost[store.win_count], money.amount) then
+				store.color_num = 10
+			else
+				store.color_num = 8
+			end
 		else
 			store.color_num = 2 
 			store.cost = ""
 		end
 	else
 		store.win_btn = 2
+	end
+	if store.speed_count == #store.speed_amount and store.gain_count == #store.gain_amount and store.win_count == #store.win_amount - 1 then
+		money.amount_color = 10	
+	else
+		money.amount_color = 7
 	end
 
 	if btnp(⬆️) and choice.num > 1 then
@@ -215,10 +231,10 @@ function update_game()
 				money.amount -= store.win_cost[store.win_count]
 				wins += store.win_amount[store.win_count]
 				store.win_count += 1
-				money.amount = 0 
+				money.amount = 32767 
 				moneyman.x = 2 * 8
-				moneyman.speed = 0.8 * wins
-				money.gain = 2 * wins 
+				moneyman.speed = 1 * wins
+				money.gain = 4 * wins 
 				store.speed_count = 1
 				store.gain_count = 1
 				store.speed_display_color = 7
@@ -226,7 +242,9 @@ function update_game()
 				store.win_display_color = 7
 				sfx(6)
 			else
-				current_scene = "win"
+				if store.speed_count == #store.speed_amount and store.gain_count == #store.gain_amount and money.amount == 32767 then
+					current_scene = "win"
+				end
 			end
 		else
 			sfx(3)
@@ -239,11 +257,11 @@ function draw_game()
 	map(16, 0, 0, 0, 16, 16, 0)	
 	map(0, 0, 0, 0, 16, 16, 0)
 	spr(moneyman.tile, moneyman.x, moneyman.y, 1, 1)
-	print("$" .. money.amount, 2 * 8, 2 * 8, 7)
+	print("$" .. money.amount, 2 * 8, 2 * 8, money.amount_color)
 	print(money.maxed, 5.5 * 8, 2 * 8, 2)
 	print("speed:", 2 * 8, 8 * 8, 7)
 	print("gain: ", 2 * 8, 8 * 9, 7)
-	print("win:  ", 2 * 8, 8 * 10, 7)
+	print(store.win_display_label, 2 * 8, 8 * 10, store.win_display_label_color)
 	print(store.speed_display, 5.5 * 8, 8 * 8, store.speed_display_color)
 	print(store.gain_display, 5.5 * 8, 8 * 9, store.gain_display_color)
 	print(store.win_display, 5.5 * 8, 8 * 10, store.win_display_color)
@@ -514,7 +532,7 @@ __gff__
 __map__
 1010101010101010101010101010001000000d00000f0000000000000b000d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000b0e0000000f00000d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000b00000c00000000000b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000b0000001b000000000b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000e000000000000000000000c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000400000000000000000000000000c00000000000b000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000500000000000000b00000000000000000e00000000000d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
