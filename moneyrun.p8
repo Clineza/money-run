@@ -37,6 +37,8 @@ function play_song_one()
 end
 -->8
 -- components
+
+-- pos --
 pos = {}
 
 function pos.new(x, y)
@@ -55,6 +57,43 @@ function pos:reset()
 	self.x = self.start_x
 	self.y = self.start_y
 end
+-- end pos --
+
+-- text line --
+textline = {}
+
+function textline.new(x, y, text, col, timer, sound)
+	local self = {
+		x = x,
+		y = y,
+		text = text,
+		str = "",
+		col = col,
+		num = 1,
+		timer = timer,
+		sound = sound,
+	}
+	
+	setmetatable(self, { __index = textline })
+	return self
+end
+
+function textline:can_update(seconds)
+	if self.timer < seconds then
+		return true
+	end 
+	return false
+end
+
+function textline:update()
+	if self.num <= #self.text then
+		self.str = self.str..self.text[self.num]
+		self.num += 1
+		sfx(sound)
+	end
+end
+-- end text line --
+
 
 -->8
 game = {
@@ -429,13 +468,8 @@ curs = {
 }
 
 wintext = {
-	line1 = "you have finally made it",
-	line2 = "you have become...",
-	line1str = "",
-	line2str = "",
-	line1_num = 1,
-	line2_num = 1,
-	line1p = pos.new(8, 64)
+	line1 = textline.new(8, 64, "you have finally made it", 7, 0, 46),
+	line2 = textline.new(8, 72, "you have become...", 7, 300, 46),
 }
 
 function update_win()
@@ -452,13 +486,13 @@ function update_win()
 	end
 	
 	if win_counter % 8 == 0 then
-		if wintext.line1_num <= #wintext.line1 then
-			wintext.line1str = wintext.line1str..wintext.line1[wintext.line1_num]
-			wintext.line1_num += 1
-			sfx(46)
-		end
-		curs.pos.x = ?wintext.line1str
-		curs.pos.y = wintext.line1p.y -1
+		for key, l in pairs(wintext) do
+			if l:can_update(win_counter) then
+				l:update()
+				curs.pos.x = ?l.str
+				curs.pos.y = l.y - 1
+			end
+		end	
 	end
 end
 
@@ -468,14 +502,19 @@ function draw_win()
 	
 	if win_draw == true then
 		circfill(64, 64, win_circ, 9)
-		
+		print(win_counter, 8, 8, 7)
 		if curs.draw then
 			rectfill(curs.pos.x, curs.pos.y, curs.pos.x + 5, curs.pos.y + 6, curs.col)
 		end
 		
-		print(wintext.line1str, wintext.line1p.x, wintext.line1p.y, 7)
+		for key, l in pairs(wintext) do
+			print(l.str, l.x, l.y, l.col)
+		end
+		
 	end
 end
+
+
 -->8
 screen_wait = true
 cir = {
